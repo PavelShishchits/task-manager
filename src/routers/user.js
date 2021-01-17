@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../db/models/User');
 const updateIsAllowed = require('../utils/allowedUpdates');
+const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -57,13 +58,8 @@ router.patch('/users/:id', async (req, res) => {
     }
 });
 
-router.get('/users', async (req, res) => {
-    try {
-        const users = await User.find({});
-        res.send(users);
-    } catch (error) {
-        res.send(500).send(error);
-    }
+router.get('/users/me', authMiddleware, async (req, res) => {
+    res.send(req.user); // req.user from auth middleware
 });
 
 router.get('/users/:id', async (req, res) => {
