@@ -2,6 +2,7 @@ const { model, Schema } = require('mongoose');
 const { hash, compare } = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
+const Task = require('./Task');
 
 const userSchema = new Schema({
     name: {
@@ -44,12 +45,34 @@ const userSchema = new Schema({
             type: String,
             required: true,
         }
-    }]
+    }],
+    avatar: {
+        type: Buffer,
+    }
+}, {
+    timestamps: true,
+});
+
+userSchema.methods.toJSON = function () {
+    const user = this;
+    const userObject = user.toObject();
+
+    delete userObject.password;
+    delete userObject.tokens;
+    delete userObject.avatar;
+
+    return userObject;
+}
+
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner',
 });
 
 userSchema.methods.generateAuthToken = async function () {
     const user = this;
-    const token = jwt.sign({_id: user._id.toString()}, 'secret', {
+    const token = jwt.sign({_id: user._id.toString()},'secret', {
         expiresIn: '7 days',
     });
     user.tokens = user.tokens.concat({ token });
@@ -80,7 +103,13 @@ userSchema.pre('save', async function (next) {
         user.password = await hash(user.password, 8);
     }
     next();
-})
+});
+
+userSchema.pre('remove', async function (next) {
+   const user = this;
+   await Task.deleteMany({owner: user._id});
+   next()
+});
 
 const User = model('User', userSchema);
 
