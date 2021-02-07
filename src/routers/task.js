@@ -42,7 +42,7 @@ router.patch('/tasks/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Get task
+// Get tasks
 router.get('/tasks', authMiddleware, async (req, res) => {
     const match = {};
     const sort = {};

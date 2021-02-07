@@ -9,9 +9,8 @@ const router = express.Router();
 
 // Sing up
 router.post('/users', async (req ,res) => {
-    const user = new User(req.body);
     try {
-        // await user.save();
+        const user = new User(req.body);
         const token = await user.generateAuthToken();
         res.status(201).send({
             user,
@@ -87,24 +86,12 @@ router.patch('/users/me', authMiddleware, async (req, res) => {
     }
 });
 
-router.get('/users/:id', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).send();
-        }
-        res.send(user);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-});
-
 // Delete user
 router.delete('/users/me', authMiddleware, async (req, res) => {
     try {
         const {user} = req;
         await user.remove();
-        res.send(user);
+        res.send();
     } catch (error) {
         res.status(500).send(error);
     }
@@ -128,7 +115,6 @@ router.post('/users/me/avatar', authMiddleware, uploadAvatar.single('avatar'), a
     await req.user.save()
     res.send();
 }, (error, req, res, next) => {
-    console.log(error);
     res.status(400).send({error: error.message});
 });
 
