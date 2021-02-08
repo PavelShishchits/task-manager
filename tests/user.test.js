@@ -7,8 +7,7 @@ describe('User', () => {
 
     beforeEach(setupDatabase);
 
-    describe('Sign up, login, logout', () => {
-
+    describe('User sign up', () => {
         it('Should sign up new user', async () => {
             const response = await request(app).post('/users').send({
                 name: 'Pavel',
@@ -23,6 +22,16 @@ describe('User', () => {
             expect(user.password).not.toBe('!1234567');
         });
 
+        it('Should not sign up user with invalid data', async () => {
+            await request(app).post('/users').send({
+                name: 'Pavel',
+                email: 'pavel.com',
+                password: '!123'
+            }).expect(400);
+        });
+    })
+
+    describe('User login', () => {
         it('Should login existing user', async () => {
             const response = await request(app).post('/users/login').send({
                 email: userOne.email,
@@ -39,7 +48,9 @@ describe('User', () => {
                 password: '12345678',
             }).expect(400);
         });
+    });
 
+    describe('User logout', () => {
         it('Should logout user correctly', async () => {
             await request(app).post('/users/logout')
                 .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -57,7 +68,7 @@ describe('User', () => {
             const user = await User.findById(userOne._id);
             expect(user.tokens).toHaveLength(0);
         })
-    })
+    });
 
     describe('Get user profile', () => {
         it('Should get user profile', async () => {
@@ -68,10 +79,9 @@ describe('User', () => {
         });
 
         it('Should not get profile for unauthenticated user', async () => {
-            const response = await request(app).get('/users/me')
+            await request(app).get('/users/me')
                 .send()
                 .expect(401);
-            expect(response.body.error).toBe('Please authenticate');
         });
     });
 
@@ -84,6 +94,12 @@ describe('User', () => {
 
            const user = await User.findById(userOne._id);
            expect(user).toBeNull()
+       });
+
+       it('Should not delete unauthenticated user', async () => {
+           await request(app).delete('/users/me')
+               .send()
+               .expect(401);
        });
    });
 
@@ -98,6 +114,12 @@ describe('User', () => {
            const user = await User.findById(userOne._id);
            expect(user.name).toBe('VaryaTheCat');
        })
+
+       it('Should not update unauthenticated user', async () => {
+           await request(app).patch('/users/me')
+               .send()
+               .expect(401);
+       });
 
        it('Should throw error if updating nonexistent property', async () => {
            await request(app).patch('/users/me')
